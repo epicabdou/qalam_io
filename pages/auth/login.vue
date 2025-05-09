@@ -116,21 +116,26 @@ const handleGoogleAuth = async () => {
   isLoading.value = true
 
   try {
-    // Définir l'URL de redirection // MODIFIED
-    const redirectUrl = window.location.origin + '/auth/callback'
+    // Save the intended redirect destination in sessionStorage
+    // This should be done BEFORE starting the OAuth flow
+    const redirectPath = sessionStorage.getItem('redirectPath') || '/'
+    console.log('Setting redirectPath for after OAuth:', redirectPath)
+    sessionStorage.setItem('redirectPath', redirectPath)
 
-    // Démarrer le flux OAuth Google // MODIFIED
+    // Define the callback URL
+    const redirectUrl = window.location.origin + '/auth/callback'
+    console.log('OAuth callback URL:', redirectUrl)
+
+    // Start the OAuth flow with Google
     await $pb.collection('users').authWithOAuth2({
       provider: 'google',
       scopes: ['email', 'profile'],
       redirectUrl: redirectUrl
     })
 
-    // Note : Le code ci-dessous ne s'exécutera pas immédiatement car le navigateur redirigera // MODIFIED
+    // Note: The code below won't execute immediately as the browser will redirect
   } catch (err) {
-    // MODIFIED
     console.error('Erreur d\'authentification Google :', err)
-    // MODIFIED
     error.value = err.message || 'Échec de la connexion avec Google. Veuillez réessayer.'
     isLoading.value = false
   }

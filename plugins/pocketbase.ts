@@ -30,12 +30,29 @@ export default defineNuxtPlugin(async (nuxtApp) => {
         // Set the auth state in our Pinia store
         authStore.setUser(pb.authStore.record)
         authStore.setLoggedIn(true)
+
+        // ADDED: Check if we're not on the callback page but auth is valid
+        // This helps with initial page load after authentication
+        const currentPath = window.location.pathname
+        if (currentPath === '/auth/login' || currentPath === '/auth/register') {
+            // If we're authenticated but on login/register page, redirect to home
+            navigateTo('/')
+        }
     }
 
-    // Listen for auth state changes
+    // IMPROVED: Auth store change listener to handle redirect after auth changes
     pb.authStore.onChange((token, model) => {
         authStore.setUser(model || null)
         authStore.setLoggedIn(pb.authStore.isValid)
+
+        // If authentication changed and we're now logged in
+        // and we're on a login-related page, redirect to home
+        if (pb.authStore.isValid) {
+            const currentPath = window.location.pathname
+            if (currentPath === '/auth/login' || currentPath === '/auth/register') {
+                navigateTo('/')
+            }
+        }
     })
 
     // Make PocketBase and auth methods available globally

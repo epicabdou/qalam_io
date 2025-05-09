@@ -3,7 +3,7 @@
   <div class="oauth-callback">
     <div class="loading-container">
       <div class="loading-spinner"></div>
-      <p>Achèvement de l’authentification...</p>
+      <p>Achèvement de l'authentification...</p>
     </div>
   </div>
 </template>
@@ -44,13 +44,12 @@ onMounted(async () => {
       const redirectPath = sessionStorage.getItem('redirectPath') || '/'
       console.log('Redirecting to:', redirectPath)
 
-      // Use await to ensure navigation completes
-      await navigateTo(redirectPath)
+      // FIXED: Removed location.reload() and just use navigateTo
+      // Don't reload the page as it interrupts the navigation flow
+      navigateTo(redirectPath, { replace: true })
 
+      // Clean up the session storage
       sessionStorage.removeItem('redirectPath')
-
-      location.reload();
-
     } else {
       // Authentication failed
       console.log('Auth failed, redirecting to login')
