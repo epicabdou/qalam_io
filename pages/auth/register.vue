@@ -1,88 +1,97 @@
 <template>
-  <div>
-    <div>
-      <h1>Créer un Compte</h1>
+  <div class="flex min-h-screen items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+    <div class="w-full max-w-md space-y-8">
+      <div class="text-center">
+        <h1 class="text-3xl font-bold text-primary">Créer un Compte</h1>
+        <p class="mt-2 text-sm">
+          Inscrivez-vous pour utiliser notre service
+        </p>
+      </div>
 
-      <form @submit.prevent="handleRegister">
-        <div>
-          <label for="email">E-mail</label>
-          <div>
-            <input
-                id="email"
+      <UCard class="mt-8">
+        <form @submit.prevent="handleRegister" class="space-y-6">
+          <UFormGroup label="E-mail" name="email">
+            <UInput
                 v-model="email"
                 type="email"
                 required
                 placeholder="Entrez votre e-mail"
+                :ui="{ base: 'w-full' }"
             />
-          </div>
-        </div>
+          </UFormGroup>
 
-        <div>
-          <label for="password">Mot de Passe</label>
-          <div>
-            <input
-                id="password"
+          <UFormGroup label="Mot de Passe" name="password" help="Le mot de passe doit comporter au moins 8 caractères">
+            <UInput
                 v-model="password"
                 type="password"
                 required
-                placeholder="Entrez votre mot de passe" minlength="8"
+                placeholder="Entrez votre mot de passe"
+                minlength="8"
+                :ui="{ base: 'w-full' }"
             />
-          </div>
-          <p>Le mot de passe doit comporter au moins 8 caractères</p>
-        </div>
+          </UFormGroup>
 
-        <div>
-          <label for="passwordConfirm">Confirmer le Mot de Passe</label>
-          <div>
-            <input
-                id="passwordConfirm"
+          <UFormGroup label="Confirmer le Mot de Passe" name="passwordConfirm">
+            <UInput
                 v-model="passwordConfirm"
                 type="password"
                 required
                 placeholder="Confirmez votre mot de passe"
+                :ui="{ base: 'w-full' }"
             />
+            <template #help>
+              <p v-if="passwordConfirm.length > 0 && password !== passwordConfirm" class="text-red-500">
+                Les mots de passe ne correspondent pas
+              </p>
+            </template>
+          </UFormGroup>
+
+          <div v-if="error" class="rounded-md bg-red-50 p-4">
+            <div class="flex">
+              <UIcon name="i-heroicons-exclamation-circle" class="h-5 w-5 text-red-400" />
+              <div class="ml-3">
+                <p class="text-sm text-red-700">{{ error }}</p>
+              </div>
+            </div>
           </div>
-          <p v-if="passwordConfirm.length > 0 && password !== passwordConfirm">
-            Les mots de passe ne correspondent pas
+
+          <UButton
+              type="submit"
+              color="primary"
+              block
+              :loading="isLoading"
+              :disabled="isLoading || !isPasswordValid"
+          >
+            {{ isLoading ? 'Création du compte...' : 'S\'inscrire' }}
+          </UButton>
+        </form>
+
+        <div class="mt-6 text-center">
+          <p class="text-sm text-gray-600">
+            Vous avez déjà un compte ?
+            <NuxtLink to="/auth/login" class="font-medium text-primary hover:text-primary-dark">
+              Se connecter
+            </NuxtLink>
           </p>
         </div>
 
-        <div v-if="error">
-          {{ error }}
+        <div class="mt-6 text-xs text-gray-500">
+          <p>
+            En vous inscrivant, vous acceptez nos
+            <a href="#" class="font-medium text-primary hover:text-primary-dark">Conditions Générales d'Utilisation</a> et
+            <a href="#" class="font-medium text-primary hover:text-primary-dark">Politique de Confidentialité</a>
+          </p>
         </div>
-
-        <button type="submit" :disabled="isLoading || !isPasswordValid">
-          <span v-if="isLoading">
-            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-              <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-              <path fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-            </svg>
-          </span>
-          {{ isLoading ? 'Création du compte...' : 'S\'inscrire' }}
-        </button>
-      </form>
-
-      <p>
-        Vous avez déjà un compte ?
-        <NuxtLink to="/auth/login">Se connecter</NuxtLink>
-      </p>
-
-      <div>
-        <p>
-          En vous inscrivant, vous acceptez nos
-          <a href="#">Conditions Générales d'Utilisation</a> et
-          <a href="#">Politique de Confidentialité</a>
-        </p>
-      </div>
+      </UCard>
     </div>
   </div>
 </template>
 
 <script setup>
 import { ref, computed } from 'vue'
-import { useAuthStore } from '~/stores/auth.ts'
+import { useAuthStore } from '~/stores/auth'
 
-// Appliquer le middleware invité pour empêcher les utilisateurs connectés d'accéder à cette page // MODIFIED
+// Apply guest middleware to prevent logged-in users from accessing this page
 definePageMeta({
   middleware: ['guest']
 })
@@ -103,9 +112,8 @@ const isPasswordValid = computed(() => {
 const handleRegister = async () => {
   error.value = ''
 
-  // Valider que les mots de passe correspondent // MODIFIED
+  // Validate password match
   if (password.value !== passwordConfirm.value) {
-    // MODIFIED
     error.value = 'Les mots de passe ne correspondent pas'
     return
   }
@@ -113,34 +121,30 @@ const handleRegister = async () => {
   isLoading.value = true
 
   try {
-    // Créer l'utilisateur // MODIFIED
+    // Create new user
     const userData = {
       email: email.value,
       password: password.value,
-      passwordConfirm: passwordConfirm.value,
-      // You might want to add a default name or other fields here
-      // name: "New User"
+      passwordConfirm: passwordConfirm.value
     }
 
-    // Inscrire le nouvel utilisateur // MODIFIED
+    // Register the new user
     const newUser = await $pb.collection('users').create(userData)
 
-    // Connexion automatique après l'inscription // MODIFIED
+    // Auto-login after registration
     const authData = await $pb.collection('users').authWithPassword(
         email.value,
         password.value
     )
 
-    // Mettre à jour le store d'authentification // MODIFIED
+    // Update auth store
     authStore.setUser(authData.record)
     authStore.setLoggedIn(true)
 
-    // Naviguer vers // MODIFIED (Navigate to home page after successful registration)
+    // Navigate to home page after successful registration
     navigateTo('/')
   } catch (err) {
-    // MODIFIED
     console.error('Erreur d\'inscription :', err)
-    // MODIFIED
     error.value = err.message || 'Échec de l\'inscription. Veuillez réessayer.'
   } finally {
     isLoading.value = false
