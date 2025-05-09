@@ -55,7 +55,10 @@
           </NuxtLink>
 
           <!-- Templates -->
+
+          <!-- Templates (Admin only) -->
           <NuxtLink
+              v-if="authStore.isAdmin"
               to="/dashboard/templates"
               class="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium"
               :class="route.path.includes('/dashboard/templates') ? 'bg-primary' : ''"

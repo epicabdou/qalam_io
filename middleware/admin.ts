@@ -19,7 +19,7 @@ export default defineNuxtRouteMiddleware((to, from) => {
     }
 
     // Then check if the authenticated user is an admin
-    if (!$pb.authStore.model.isAdmin) {
+    if (!authStore.isAdmin) {
         // User is authenticated but not an admin
         // Redirect to unauthorized page or dashboard
         return navigateTo({

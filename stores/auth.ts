@@ -11,6 +11,7 @@ export const useAuthStore = defineStore('auth', {
     getters: {
         isAuthenticated: (state) => state.isLoggedIn && state.user !== null,
         currentUser: (state) => state.user,
+        // Explicitly check for isAdmin flag to enforce permissions
         isAdmin: (state) => state.user && state.user.isAdmin === true
     },
 

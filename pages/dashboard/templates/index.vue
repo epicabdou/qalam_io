@@ -1,3 +1,4 @@
+
 <template>
   <div>
     <!-- Header with Actions -->
@@ -8,13 +9,23 @@
           Browse and use content templates
         </p>
       </div>
-      <div>
+      <div class="flex flex-col space-y-3 sm:flex-row sm:space-x-3 sm:space-y-0">
         <UInput
             v-model="search"
             placeholder="Search templates..."
             icon="i-heroicons-magnifying-glass"
             class="w-full md:w-64"
         />
+
+        <!-- Add New Template button (admin only) -->
+        <UButton
+            v-if="authStore.isAdmin"
+            color="primary"
+            to="/dashboard/templates/new"
+            icon="i-heroicons-plus"
+        >
+          New Template
+        </UButton>
       </div>
     </div>
 
@@ -52,6 +63,11 @@
       <p class="mt-1 text-sm text-gray-500">
         {{ search ? `No templates matching "${search}"` : 'No templates available.' }}
       </p>
+      <div v-if="authStore.isAdmin" class="mt-6">
+        <UButton to="/dashboard/templates/new" color="primary">
+          Create a Template
+        </UButton>
+      </div>
     </div>
 
     <div v-else class="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
@@ -97,14 +113,6 @@
                   variant="subtle"
                   size="xs"
               >
-                {{ param.label }}
-              </UBadge>
-              <UBadge
-                  v-if="template.parameters.length > 3"
-                  color="gray"
-                  variant="subtle"
-                  size="xs"
-              >
                 +{{ template.parameters.length - 3 }} more
               </UBadge>
             </div>
@@ -129,9 +137,56 @@
           >
             Preview
           </UButton>
+          <!-- Admin Actions -->
+          <template v-if="authStore.isAdmin">
+            <UButton
+                color="gray"
+                variant="ghost"
+                size="sm"
+                :to="`/dashboard/templates/${template.id}/edit`"
+                icon="i-heroicons-pencil-square"
+            >
+              Edit
+            </UButton>
+            <UButton
+                color="gray"
+                variant="ghost"
+                size="sm"
+                icon="i-heroicons-trash"
+                @click.stop="confirmDelete(template)"
+            />
+          </template>
         </div>
       </UCard>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model="showDeleteModal">
+      <div class="p-4 sm:p-6">
+        <div class="text-center sm:text-left">
+          <UIcon name="i-heroicons-exclamation-triangle" class="mx-auto h-12 w-12 text-red-400 sm:mx-0" />
+          <h3 class="mt-3 text-lg font-medium">Delete template</h3>
+          <p class="mt-2 text-sm text-gray-500">
+            Are you sure you want to delete this template? This action cannot be undone and may affect content that uses this template.
+          </p>
+        </div>
+        <div class="mt-4 flex justify-end gap-3 sm:mt-6">
+          <UButton
+              color="gray"
+              @click="showDeleteModal = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+              color="red"
+              @click="deleteTemplate"
+              :loading="isDeleting"
+          >
+            Delete
+          </UButton>
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
@@ -153,6 +208,9 @@ const templates = ref([])
 const isLoading = ref(true)
 const search = ref('')
 const selectedCategory = ref(null)
+const showDeleteModal = ref(false)
+const templateToDelete = ref(null)
+const isDeleting = ref(false)
 
 // Categories for filtering
 const categories = [
@@ -206,6 +264,38 @@ const fetchTemplates = async () => {
     templates.value = []
   } finally {
     isLoading.value = false
+  }
+}
+
+// Confirm delete
+const confirmDelete = (template) => {
+  templateToDelete.value = template
+  showDeleteModal.value = true
+}
+
+// Delete template
+const deleteTemplate = async () => {
+  if (!templateToDelete.value) return
+
+  isDeleting.value = true
+
+  try {
+    await $pb.collection('templates').delete(templateToDelete.value.id)
+
+    // Remove from list
+    templates.value = templates.value.filter(t => t.id !== templateToDelete.value.id)
+
+    // Close modal
+    showDeleteModal.value = false
+    templateToDelete.value = null
+
+    // Show success message
+    // You could add a toast notification here
+  } catch (error) {
+    console.error('Error deleting template:', error)
+    // Show error message
+  } finally {
+    isDeleting.value = false
   }
 }
 

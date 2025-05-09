@@ -32,7 +32,8 @@
                 <UDropdownMenu
                     :items="[
                       { label: 'My Profile', icon: 'i-heroicons-user-circle', to: '/account' },
-                      { label: 'Dashboard', icon: 'i-heroicons-chart-bar', to: '/dashboard', disabled: !authStore.isAdmin },
+                      { label: 'Dashboard', icon: 'i-heroicons-chart-bar', to: '/dashboard' },
+                      { label: 'Templates', icon: 'i-heroicons-template', to: '/dashboard/templates', disabled: !authStore.isAdmin },
                       { label: 'Logout', icon: 'i-heroicons-arrow-right-on-rectangle', onClick: logout }
                     ]"
                     :popper="{ placement: 'bottom-end' }"

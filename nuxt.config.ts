@@ -36,13 +36,25 @@ export default defineNuxtConfig({
         if (route.path.startsWith('/dashboard')) {
           route.meta = route.meta || {}
           route.meta.middleware = route.meta.middleware || []
+          if (!route.meta.middleware.includes('auth')) {
+            route.meta.middleware.push('auth')
+          }
+        }
+      })
+
+      // Specifically protect template management routes
+      pages.forEach(route => {
+        if (route.path.startsWith('/dashboard/templates')) {
+          route.meta = route.meta || {}
+          route.meta.middleware = route.meta.middleware || []
           if (!route.meta.middleware.includes('admin')) {
             route.meta.middleware.push('admin')
           }
         }
       })
+
+      // Apply auth middleware to all account routes
       pages.forEach(route => {
-        // Apply admin middleware to all account routes
         if (route.path.startsWith('/account')) {
           route.meta = route.meta || {}
           route.meta.middleware = route.meta.middleware || []

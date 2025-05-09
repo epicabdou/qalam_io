@@ -25,6 +25,25 @@
         >
           Use Template
         </UButton>
+        <!-- Admin Actions -->
+        <template v-if="authStore.isAdmin">
+          <UButton
+              color="gray"
+              variant="outline"
+              :to="`/dashboard/templates/${templateId}/edit`"
+              icon="i-heroicons-pencil-square"
+          >
+            Edit
+          </UButton>
+          <UButton
+              color="red"
+              variant="ghost"
+              icon="i-heroicons-trash"
+              @click="confirmDelete"
+          >
+            Delete
+          </UButton>
+        </template>
       </div>
     </div>
 
@@ -163,17 +182,67 @@
             >
               Create Content with this Template
             </UButton>
+
+            <!-- Admin Actions -->
+            <div v-if="authStore.isAdmin" class="mt-3 space-y-3">
+              <UButton
+                  color="gray"
+                  variant="outline"
+                  block
+                  :to="`/dashboard/templates/${templateId}/edit`"
+                  icon="i-heroicons-pencil-square"
+              >
+                Edit Template
+              </UButton>
+              <UButton
+                  color="red"
+                  variant="ghost"
+                  block
+                  icon="i-heroicons-trash"
+                  @click="confirmDelete"
+              >
+                Delete Template
+              </UButton>
+            </div>
           </div>
         </UCard>
       </div>
     </div>
+
+    <!-- Delete Confirmation Modal -->
+    <UModal v-model="showDeleteModal">
+      <div class="p-4 sm:p-6">
+        <div class="text-center sm:text-left">
+          <UIcon name="i-heroicons-exclamation-triangle" class="mx-auto h-12 w-12 text-red-400 sm:mx-0" />
+          <h3 class="mt-3 text-lg font-medium">Delete template</h3>
+          <p class="mt-2 text-sm text-gray-500">
+            Are you sure you want to delete this template? This action cannot be undone and may affect content that uses this template.
+          </p>
+        </div>
+        <div class="mt-4 flex justify-end gap-3 sm:mt-6">
+          <UButton
+              color="gray"
+              @click="showDeleteModal = false"
+          >
+            Cancel
+          </UButton>
+          <UButton
+              color="red"
+              @click="deleteTemplate"
+              :loading="isDeleting"
+          >
+            Delete
+          </UButton>
+        </div>
+      </div>
+    </UModal>
   </div>
 </template>
 
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useAuthStore } from '~/stores/auth'
-import { useRoute } from 'vue-router'
+import { useRoute, useRouter } from 'vue-router'
 
 // Define page meta to use dashboard layout and auth middleware
 definePageMeta({
@@ -184,6 +253,7 @@ definePageMeta({
 const authStore = useAuthStore()
 const { $pb } = useNuxtApp()
 const route = useRoute()
+const router = useRouter()
 
 // Get the template ID from the route
 const templateId = computed(() => route.params.id)
@@ -191,6 +261,8 @@ const templateId = computed(() => route.params.id)
 // State
 const template = ref(null)
 const isLoading = ref(true)
+const showDeleteModal = ref(false)
+const isDeleting = ref(false)
 
 // Category display labels
 const categoryLabels = {
@@ -226,6 +298,36 @@ const formatDate = (dateString) => {
     hour: '2-digit',
     minute: '2-digit'
   }).format(date)
+}
+
+// Confirm delete
+const confirmDelete = () => {
+  showDeleteModal.value = true
+}
+
+// Delete template
+const deleteTemplate = async () => {
+  if (!template.value) return
+
+  isDeleting.value = true
+
+  try {
+    await $pb.collection('templates').delete(templateId.value)
+
+    // Close modal
+    showDeleteModal.value = false
+
+    // Redirect to templates list
+    router.push('/dashboard/templates')
+
+    // Show success message
+    // You could add a toast notification here
+  } catch (error) {
+    console.error('Error deleting template:', error)
+    // Show error message
+  } finally {
+    isDeleting.value = false
+  }
 }
 
 // Fetch template
